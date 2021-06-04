@@ -328,6 +328,34 @@ int encodeFolderRecursively(char *basePath) {
     return count;
 }
 
+int encodeFolderRecursivelyRX(char *basePath) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            count += encodeFolderRecursivelyRX(path);
+            encodeFolderNameRX(basePath, dp->d_name);
+        }
+        else {
+            // File
+            if (encodeFileRX(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+
 /*
     Function to decode folder.
     Return number of decoded file.
@@ -354,6 +382,34 @@ int decodeFolderRecursively(char *basePath) {
         else {
             // File
             if (decodeFile(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+
+int decodeFolderRecursivelyRX(char *basePath) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            count += decodeFolderRecursivelyRX(path);
+            decodeFolderNameRX(basePath, dp->d_name);
+        }
+        else {
+            // File
+            if (decodeFileRX(basePath, dp->d_name) == 0) count++;
         }
     }
     closedir(dir);
