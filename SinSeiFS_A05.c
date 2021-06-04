@@ -226,7 +226,7 @@ int decodeFolderName(const char *basePath, const char* folderName) {
     return 0;
 }
 
-int decodeFolderName(const char *basePath, const char* folderName) {
+int decodeFolderNameRX(const char *basePath, const char* folderName) {
     char decryptedName[1024];
     strcpy(decryptedName, folderName);
     decodeROT13(decryptedName);
@@ -255,6 +255,18 @@ int encodeFile(char *basePath, char *name) {
     return 0;
 }
 
+int encodeFileRX(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    encodeAtbash(fileName);
+    encodeROT13(encryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
 /*
     Function to decode file.
     Return 0 : succesful
@@ -262,6 +274,19 @@ int encodeFile(char *basePath, char *name) {
 int decodeFile(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
+    decodeAtbash(fileName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int decodeFileRX(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    decodeROT13(decryptedName);
     decodeAtbash(fileName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, name);
