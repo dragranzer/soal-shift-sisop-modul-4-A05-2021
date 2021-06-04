@@ -76,10 +76,10 @@ void decodeAtbash(char *s) {
     Procedure to encode ROT13 Cipher string.
  */
 void encodeROT13(char *s) {
-    // Encode ROT13 Cipher string
+    // Decode Atbash Cipher string
     for (int i = 0; s[i]; i++) {
-        if ('A' <= s[i] && s[i] <= 'Z') s[i] = (s[i]+13)%26;
-        else if ('a' <= s[i] && s[i] <= 'z') s[i] = (s[i]+13)%26;
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'+13)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'+13)%26)+'a';
     }
 }
 
@@ -89,8 +89,8 @@ void encodeROT13(char *s) {
 void decodeROT13(char *s) {
     // Decode ROT13 Cipher string
     for (int i = 0; s[i]; i++) {
-        if ('A' <= s[i] && s[i] <= 'Z') s[i] = (s[i]-13)%26;
-        else if ('a' <= s[i] && s[i] <= 'z') s[i] = (s[i]-13)%26;
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-13)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-13)%26)+'a';
     }
 }
 
