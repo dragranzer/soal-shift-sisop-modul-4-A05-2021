@@ -86,7 +86,7 @@ void encodeROT13(char *s) {
 /*
     Procedure to decode ROT13 Cipher string.
  */
-void encodeROT13(char *s) {
+void decodeROT13(char *s) {
     // Decode ROT13 Cipher string
     for (int i = 0; s[i]; i++) {
         if ('A' <= s[i] && s[i] <= 'Z') s[i] = (s[i]-13)%26;
