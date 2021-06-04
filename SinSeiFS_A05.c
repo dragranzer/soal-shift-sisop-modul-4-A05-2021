@@ -16,7 +16,18 @@
 
 #define DEBUG_MODE
 
-static const char *dirpath = "/home/ryan/Downloads";
+static const char *dirpath = "/home/{user}/Downloads";
+static const char *logpath = "/home/{user}/SinSeiFS.log";
+
+// const for INFO log level
+static const char *info = "INFO";
+// const for WARNING log level
+static const char *warn = "WARNING";
+
+// const for currTime string
+static const int TIME_SIZE = 30;
+// const for log string size
+static const int LOG_SIZE = 1000;
 
 /*
     Function to check if a path is decoded or not.
@@ -55,6 +66,7 @@ void decodeAtbash(char *s) {
 
 /*
     Procedure to log encoding activity.
+    WARNING -- Deprecated
  */
 void logEncode(char *dir1, char *dir2) {
     char filePath[1024];
@@ -63,6 +75,59 @@ void logEncode(char *dir1, char *dir2) {
     fprintf(fptr, "%s -> %s\n", dir1, dir2);
     fclose(fptr);
 }
+
+/*
+    function: logInfo
+    add an INFO level log
+
+    @param command: type of called system call
+    @param desc: additional information and parameters
+
+    @return null
+*/
+void logInfo(char *command, char *desc) {
+    time_t t = time(NULL);
+    struct tm* lt = localtime(&t);
+
+    char currTime[TIME_SIZE];
+    strftime(currTime, TIME_SIZE, "%d%m%Y-%H:%M:%S", lt);
+
+    char log[LOG_SIZE];
+    sprintf(log, "%s::%s:%s::%s", warn, currTime, command, desc);
+
+    FILE *out = fopen(logpath, "a");
+    fprintf(out, "%s\n", log);
+    fclose(out);
+
+    return;
+}
+
+/*
+    function: logWarn
+    add a WARNING level log
+
+    @param command: type of called system call
+    @param desc: additional information and parameters
+
+    @return null
+*/
+void logWarn(char *command, char *desc) {
+    time_t t = time(NULL);
+    struct tm* lt = localtime(&t);
+
+    char currTime[TIME_SIZE];
+    strftime(currTime, TIME_SIZE, "%d%m%Y-%H:%M:%S", lt);
+
+    char log[LOG_SIZE];
+    sprintf(log, "%s::%s:%s::%s", warn, currTime, command, desc);
+
+    FILE *out = fopen(logpath, "a");
+    fprintf(out, "%s\n", log);
+    fclose(out);
+
+    return;
+}
+
 
 /*
     Procedure to get file name and extension.
