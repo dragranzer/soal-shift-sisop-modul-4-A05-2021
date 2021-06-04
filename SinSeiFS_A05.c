@@ -42,6 +42,14 @@ bool isAtoZ(const char *path) {
     return false;
 }
 
+bool isRX(const char *path) {
+    int len = strlen(path);
+    for (int i = 0; i < len - 3 + 1; i++) {
+        if (path[i] == 'R' && path[i+1] == 'X' && path[i+2] == '_') return true;
+    }
+    return false;
+}
+
 /*
     Procedure to encode string using Atbash Cipher.
  */
