@@ -197,6 +197,19 @@ int encodeFolderName(const char *basePath, const char* folderName) {
     return 0;
 }
 
+int encodeFolderNameRX(const char *basePath, const char* folderName) {
+    char encryptedName[1024];
+    strcpy(encryptedName, folderName);
+    encodeAtbash(encryptedName);
+    encodeROT13(encryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, encryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
 /*
     Function to decode folder name.
     Return 0 : successful
@@ -204,6 +217,19 @@ int encodeFolderName(const char *basePath, const char* folderName) {
 int decodeFolderName(const char *basePath, const char* folderName) {
     char decryptedName[1024];
     strcpy(decryptedName, folderName);
+    decodeAtbash(decryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, decryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int decodeFolderName(const char *basePath, const char* folderName) {
+    char decryptedName[1024];
+    strcpy(decryptedName, folderName);
+    decodeROT13(decryptedName);
     decodeAtbash(decryptedName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, folderName);
