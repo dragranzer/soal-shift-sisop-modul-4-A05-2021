@@ -220,7 +220,7 @@ int encodeFolderName(const char *basePath, const char* folderName) {
     return 0;
 }
 
-int encodeFolderNameRX(const char *basePath, const char* folderName) {
+int encodeFolderNameRXmk(const char *basePath, const char* folderName) {
     char encryptedName[1024];
     strcpy(encryptedName, folderName);
     encodeAtbash(encryptedName);
@@ -249,7 +249,7 @@ int decodeFolderName(const char *basePath, const char* folderName) {
     return 0;
 }
 
-int decodeFolderNameRX(const char *basePath, const char* folderName) {
+int decodeFolderNameRXmk(const char *basePath, const char* folderName) {
     char decryptedName[1024];
     strcpy(decryptedName, folderName);
     decodeROT13(decryptedName);
@@ -278,7 +278,7 @@ int encodeFile(char *basePath, char *name) {
     return 0;
 }
 
-int encodeFileRX(char *basePath, char *name) {
+int encodeFileRXmk(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
     encodeAtbash(fileName);
@@ -306,7 +306,7 @@ int decodeFile(char *basePath, char *name) {
     return 0;
 }
 
-int decodeFileRX(char *basePath, char *name) {
+int decodeFileRXmk(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
     decodeROT13(decryptedName);
@@ -351,7 +351,7 @@ int encodeFolderRecursively(char *basePath) {
     return count;
 }
 
-int encodeFolderRecursivelyRX(char *basePath) {
+int encodeFolderRecursivelyRXmk(char *basePath) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -367,12 +367,12 @@ int encodeFolderRecursivelyRX(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += encodeFolderRecursivelyRX(path);
-            encodeFolderNameRX(basePath, dp->d_name);
+            count += encodeFolderRecursivelyRXmk(path);
+            encodeFolderNameRXmk(basePath, dp->d_name);
         }
         else {
             // File
-            if (encodeFileRX(basePath, dp->d_name) == 0) count++;
+            if (encodeFileRXmk(basePath, dp->d_name) == 0) count++;
         }
     }
     closedir(dir);
@@ -411,7 +411,7 @@ int decodeFolderRecursively(char *basePath) {
     return count;
 }
 
-int decodeFolderRecursivelyRX(char *basePath) {
+int decodeFolderRecursivelyRXmk(char *basePath) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -427,12 +427,12 @@ int decodeFolderRecursivelyRX(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += decodeFolderRecursivelyRX(path);
-            decodeFolderNameRX(basePath, dp->d_name);
+            count += decodeFolderRecursivelyRXmk(path);
+            decodeFolderNameRXmk(basePath, dp->d_name);
         }
         else {
             // File
-            if (decodeFileRX(basePath, dp->d_name) == 0) count++;
+            if (decodeFileRXmk(basePath, dp->d_name) == 0) count++;
         }
     }
     closedir(dir);
