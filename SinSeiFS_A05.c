@@ -13,16 +13,17 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define DEBUG_MODE
 
-static const char *dirpath = "/home/{user}/Downloads";
+static const char *dirpath = "/home/{user}/Sisop_Modul4";
 static const char *logpath = "/home/{user}/SinSeiFS.log";
 
 // const for INFO log level
-static const char *info = "INFO";
+static const char info[] = "INFO";
 // const for WARNING log level
-static const char *warn = "WARNING";
+static const char warn[] = "WARNING";
 
 // const for currTime string
 static const int TIME_SIZE = 30;
@@ -132,10 +133,8 @@ void logEncode(char *dir1, char *dir2) {
 /*
     function: logInfo
     add an INFO level log
-
     @param command: type of called system call
     @param desc: additional information and parameters
-
     @return null
 */
 void logInfo(char *command, char *desc) {
@@ -158,10 +157,8 @@ void logInfo(char *command, char *desc) {
 /*
     function: logWarn
     add a WARNING level log
-
     @param command: type of called system call
     @param desc: additional information and parameters
-
     @return null
 */
 void logWarn(char *command, char *desc) {
@@ -209,7 +206,7 @@ void getFileDetail(const char *completeFileName, char *name, char *ext) {
     Return 0 : successful
  */
 int encodeFolderName(const char *basePath, const char* folderName) {
-    char encryptedName[1024];
+    char encryptedName[512];
     strcpy(encryptedName, folderName);
     encodeAtbash(encryptedName);
     char f_path[1024], t_path[1024];
@@ -221,7 +218,7 @@ int encodeFolderName(const char *basePath, const char* folderName) {
 }
 
 int encodeFolderNameRXmk(const char *basePath, const char* folderName) {
-    char encryptedName[1024];
+    char encryptedName[512];
     strcpy(encryptedName, folderName);
     encodeAtbash(encryptedName);
     encodeROT13(encryptedName);
@@ -238,7 +235,7 @@ int encodeFolderNameRXmk(const char *basePath, const char* folderName) {
     Return 0 : successful
  */
 int decodeFolderName(const char *basePath, const char* folderName) {
-    char decryptedName[1024];
+    char decryptedName[512];
     strcpy(decryptedName, folderName);
     decodeAtbash(decryptedName);
     char f_path[1024], t_path[1024];
@@ -250,7 +247,7 @@ int decodeFolderName(const char *basePath, const char* folderName) {
 }
 
 int decodeFolderNameRXmk(const char *basePath, const char* folderName) {
-    char decryptedName[1024];
+    char decryptedName[512];
     strcpy(decryptedName, folderName);
     decodeROT13(decryptedName);
     decodeAtbash(decryptedName);
@@ -267,7 +264,7 @@ int decodeFolderNameRXmk(const char *basePath, const char* folderName) {
     Return 0 : successful
 */
 int encodeFile(char *basePath, char *name) {
-    char fileName[1024], ext[64];
+    char fileName[512], ext[64];
     getFileDetail(name, fileName, ext);
     encodeAtbash(fileName);
     char f_path[1024], t_path[1024];
@@ -282,7 +279,7 @@ int encodeFileRXmk(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
     encodeAtbash(fileName);
-    encodeROT13(encryptedName);
+    encodeROT13(fileName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, name);
     sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
@@ -309,7 +306,7 @@ int decodeFile(char *basePath, char *name) {
 int decodeFileRXmk(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
-    decodeROT13(decryptedName);
+    decodeROT13(fileName);
     decodeAtbash(fileName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, name);
@@ -439,6 +436,15 @@ int decodeFolderRecursivelyRXmk(char *basePath) {
     return count;
 }
 
+void makeHiddenRX(int flag, char *path){
+    char name[1024];
+    sprintf(name, "%s/.map", path);
+    FILE *fptr = fopen(name, "w");
+    if(fptr == NULL) exit(EXIT_FAILURE);
+    fprintf(fptr, "%d", flag);
+    fclose(fptr);
+}
+
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
     int res;
@@ -482,7 +488,29 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
     return 0;
 }
 
-
+int getRXtype(char *path){
+    char newpath[1024];
+    strcpy(newpath, path);
+    int len = strlen(path);
+    for (int i = len-1; i >= 3 ; i--) {
+        if (path[i-3] == 'R' && path[i-2] == 'X' && path[i-1] == '_'){
+            for(int j = i; j<len; j++){
+                if(newpath[j] == '/'){
+                    newpath[j] = '\0';
+                    break;
+                }
+            }
+            strcat(newpath, "/.map");
+            FILE *fptr = fopen(newpath, "r");
+            char ch;
+            fscanf(fptr, "%c", &ch);
+            fclose(fptr);
+            if(ch == '1')return 1;
+            else return 0;
+        }
+    }
+    return -1;
+}
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
@@ -557,6 +585,36 @@ static int xmp_rename(const char *from, const char *to, unsigned int flags) {
     return 0;
 }
 
+static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
+{
+    char fpath[1000];
+    if (strcmp(path, "/") == 0) {
+        path = dirpath;
+        sprintf(fpath, "%s", path);
+    }
+    else sprintf(fpath, "%s%s", dirpath, path);
+
+    if(getRXtype(fpath)){
+        
+    }
+	int res;
+
+	/* On Linux this could just be 'mknod(path, mode, rdev)' but this
+	   is more portable */
+	if (S_ISREG(mode)) {
+		res = open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode);
+		if (res >= 0)
+			res = close(res);
+	} else if (S_ISFIFO(mode))
+		res = mkfifo(fpath, mode);
+	else
+		res = mknod(fpath, mode, rdev);
+	if (res == -1)
+		return -errno;
+
+	return 0;
+}
+
 static int xmp_mkdir(const char *path, mode_t mode) {
     int res;
     char fpath[1000];
@@ -565,10 +623,18 @@ static int xmp_mkdir(const char *path, mode_t mode) {
         sprintf(fpath, "%s", path);
     }
     else sprintf(fpath, "%s%s", dirpath, path);
-    if (isAtoZ(fpath))
-        logEncode("", fpath);
+
     res = mkdir(fpath, mode);
     if (res == -1) return -errno;
+
+    if (isAtoZ(fpath))
+        logEncode("", fpath);
+    else if(isRX(fpath)){
+        //Tulis log pembuatan RX disini
+        makeHiddenRX(1, fpath);
+        
+    }
+    
     return 0;
 }
 
@@ -578,6 +644,7 @@ static const struct fuse_operations xmp_oper = {
     .read = xmp_read,
     .mkdir = xmp_mkdir,
     .rename = xmp_rename,
+    .mknod = xmp_mknod,
 };
 
 int main(int argc, char *argv[])
