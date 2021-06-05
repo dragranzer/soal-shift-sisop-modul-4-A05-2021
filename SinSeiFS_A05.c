@@ -16,9 +16,9 @@
 #include <stdlib.h>
 
 #define DEBUG_MODE
-
-static const char *dirpath = "/home/ivan/Sisop_Modul4";
-static const char *logpath = "/home/ivan/SinSeiFS.log";
+const int INF = 1000;
+static const char *dirpath = "/home/ryan/Downloads";
+static const char *logpath = "/home/ryan/SinSeiFS.log";
 
 // const for INFO log level
 static const char info[] = "INFO";
@@ -52,6 +52,21 @@ bool isRX(const char *path) {
 }
 
 bool isAisA(const char *path) {
+    for (int i = strlen(path) - 1; i >= 7; i--) {
+        if (path[i-7] == 'A' && 
+            path[i-6] == '_' && 
+            path[i-5] == 'i' &&
+            path[i-4] == 's' &&
+            path[i-3] == '_' &&
+            path[i-2] == 'a' && 
+            path[i-1] == '_') {
+                return true;
+            }
+    }
+    return false;
+}
+
+bool isAisA_Content(const char *path) {
     bool startScan = false;
     for (int i = strlen(path) - 1; i >= 7; i--) {
         if (path[i] == '/') {
@@ -196,12 +211,12 @@ void logWarn(char *command, char *desc) {
 void logEncode(char *dir1, char *dir2) {
     char buff[1024], cmd[32];
     if (dir1[0] != '\0') {
-        strcpy(cmd, "CREATE");
+        strcpy(cmd, "RENAME");
         sprintf(buff, "%s::%s", dir1, dir2);
         logInfo(cmd, buff);
     }
     else {
-        strcpy(cmd, "RENAME");
+        strcpy(cmd, "CREATE");
         sprintf(buff, "%s", dir2);
         logWarn(cmd, buff);
     }
@@ -400,7 +415,7 @@ int decodeFileRXrn(char *basePath, char *name) {
     Function to encode folder recursively.
     Return number of encoded file.
 */
-int encodeFolderRecursively(char *basePath) {
+int encodeFolderRecursively(char *basePath, int depth) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -416,8 +431,10 @@ int encodeFolderRecursively(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += encodeFolderRecursively(path);
-            encodeFolderName(basePath, dp->d_name);
+            if (depth > 0) {
+                count += encodeFolderRecursively(path, depth - 1);
+                encodeFolderName(basePath, dp->d_name);
+            }
         }
         else {
             // File
@@ -456,7 +473,7 @@ int encodeFolderRecursivelyRXmk(char *basePath) {
     return count;
 }
 
-int encodeFolderRecursivelyRXrn(char *basePath) {
+int encodeFolderRecursivelyRXrn(char *basePath, int depth) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -472,8 +489,10 @@ int encodeFolderRecursivelyRXrn(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += encodeFolderRecursivelyRXrn(path);
-            encodeFolderNameRXrn(basePath, dp->d_name);
+            if (depth > 0) {
+                count += encodeFolderRecursivelyRXrn(path, depth - 1);
+                encodeFolderNameRXrn(basePath, dp->d_name);
+            }
         }
         else {
             // File
@@ -488,7 +507,7 @@ int encodeFolderRecursivelyRXrn(char *basePath) {
     Function to decode folder.
     Return number of decoded file.
 */
-int decodeFolderRecursively(char *basePath) {
+int decodeFolderRecursively(char *basePath, int depth) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -504,8 +523,10 @@ int decodeFolderRecursively(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += decodeFolderRecursively(path);
-            decodeFolderName(basePath, dp->d_name);
+            if (depth > 0) {
+                count += decodeFolderRecursively(path, depth - 1);
+                decodeFolderName(basePath, dp->d_name);
+            }
         }
         else {
             // File
@@ -544,7 +565,7 @@ int decodeFolderRecursivelyRXmk(char *basePath) {
     return count;
 }
 
-int decodeFolderRecursivelyRXrn(char *basePath) {
+int decodeFolderRecursivelyRXrn(char *basePath, int depth) {
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -560,8 +581,10 @@ int decodeFolderRecursivelyRXrn(char *basePath) {
         stat(path, &path_stat);
         if (!S_ISREG(path_stat.st_mode)) {
             // Folder
-            count += decodeFolderRecursivelyRXrn(path);
-            decodeFolderNameRXrn(basePath, dp->d_name);
+            if (depth > 0) {
+                count += decodeFolderRecursivelyRXrn(path, INF);
+                decodeFolderNameRXrn(basePath, dp->d_name);
+            }
         }
         else {
             // File
@@ -694,12 +717,28 @@ static int xmp_rename(const char *from, const char *to, unsigned int flags) {
     stat(fpath, &path_stat);
     if (!S_ISREG(path_stat.st_mode)) {
         // If the folder is encoded and will be decoded
-        if (isAtoZ(fpath) && !isAtoZ(tpath)) {
+        // Rename AtoZ to A_is_a_
+        if (isAtoZ(fpath) && isAisA(tpath)) {
+            decodeFolderRecursively(fpath, 0);
+            logEncode(fpath, tpath);
+            #if defined DEBUG_MODE
+            printf("[QAQ] Decoding %s with depth = 0.\n", fpath);
+            #endif
+        }
+        // Rename A_is_a_ to AtoZ
+        else if (isAisA(fpath) && isAtoZ(tpath)) {
+            encodeFolderRecursively(fpath, 0);
+            logEncode(fpath, tpath);
+            #if defined DEBUG_MODE
+            printf("[QAQ] Encoding %s with depth = 0.\n", tpath);
+            #endif
+        }
+        else if (isAtoZ(fpath) && !isAtoZ(tpath)) {
             #if defined DEBUG_MODE
             printf("[QAQ] Decoding %s.\n", fpath);
             #endif
             logEncode(fpath, tpath);
-            int count = decodeFolderRecursively(fpath);
+            int count = decodeFolderRecursively(fpath, INF);
             #if defined DEBUG_MODE
             printf("[QAQ] Total decoded file : %d\n", count);
             #endif
@@ -710,14 +749,36 @@ static int xmp_rename(const char *from, const char *to, unsigned int flags) {
             printf("[QAQ] Encoding %s.\n", fpath);
             #endif
             logEncode(fpath, tpath);
-            int count = encodeFolderRecursively(fpath);
+            int count = encodeFolderRecursively(fpath, INF);
             #if defined DEBUG_MODE
             printf("[QAQ] Total encoded file : %d\n", count);
             #endif
+        }
+        // Rename RX_ to A_is_a_
+        else if (isRX(fpath) && isAisA(tpath)) {
+            decodeFolderRecursivelyRXrn(fpath, 0);
+        }
+        // Rename A_is_a to RX_
+        else if (isAisA(fpath) && isRX(tpath)) {
+            encodeFolderRecursivelyRXrn(fpath, 0);
         }else if(!isRX(fpath) && isRX(tpath)){
-            int count = encodeFolderRecursivelyRXrn(fpath);
+            encodeFolderRecursivelyRXrn(fpath, INF);
+            logEncode(fpath, tpath);
         }else if(isRX(fpath) && !isRX(tpath)){
-            int count = decodeFolderRecursivelyRXrn(fpath);
+            decodeFolderRecursivelyRXrn(fpath, INF);
+            logEncode(fpath, tpath);
+        }
+        else if (isAisA(fpath) && !isAisA(tpath)) {
+            #if defined DEBUG_MODE
+            printf("[QAQ] Decoding %s.", fpath);
+            #endif
+            logEncode(fpath, tpath);
+        }
+        else if (!isAisA(fpath) && isAisA(tpath)) {
+            #if defined DEBUG_MODE
+            printf("[QAQ] Encoding %s.", tpath);
+            #endif
+            logEncode(fpath, tpath);
         }
     }
 
@@ -769,12 +830,14 @@ static int xmp_mkdir(const char *path, mode_t mode) {
     if (res == -1) return -errno;
 
     if (isAtoZ(fpath)){
-        int count = encodeFolderRecursively(fpath);
+        logEncode("", fpath);
+    }
+    else if (isAisA(fpath)) {
         logEncode("", fpath);
     }
 
     else if(isRX(fpath)){
-        //Tulis log pembuatan RX disini
+        logEncode("", fpath);
         makeHiddenRX(1, fpath);
         
     }
