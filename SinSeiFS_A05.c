@@ -118,20 +118,6 @@ void decodeVig(char *s) {
     }
 }
 
-
-
-/*
-    Procedure to log encoding activity.
-    WARNING -- Deprecated
- */
-void logEncode(char *dir1, char *dir2) {
-    char filePath[1024];
-    sprintf(filePath, "%s/encode_log.txt", dirpath);
-    FILE *fptr = fopen(filePath, "a");
-    fprintf(fptr, "%s -> %s\n", dir1, dir2);
-    fclose(fptr);
-}
-
 /*
     function: logInfo
     add an INFO level log
@@ -180,6 +166,23 @@ void logWarn(char *command, char *desc) {
     return;
 }
 
+/*
+    Procedure to log encoding activity.
+    New: Updated at 05-06-2021 20:17
+ */
+void logEncode(char *dir1, char *dir2) {
+    char buff[1024], cmd[32];
+    if (dir1[0] != '\0') {
+        strcpy(cmd, "CREATE");
+        sprintf(buff, "%s::%s", dir1, dir2);
+        logInfo(cmd, buff);
+    }
+    else {
+        strcpy(cmd, "RENAME");
+        sprintf(buff, "%s", dir2);
+        logWarn(cmd, buff);
+    }
+}
 
 /*
     Procedure to get file name and extension.
