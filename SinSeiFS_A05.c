@@ -101,6 +101,7 @@ void encodeVig(char *s) {
     char key[] = "SISOP";
     for (int i = 0; s[i]; i++) {
     	//cout <<"DEBUG "<< (key[i%((sizeof(key)-3))]) << endl;
+        //printf("DEBUG %d\n", (key[i%((sizeof(key)-1))]-'A'));
         if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'+(key[i%((sizeof(key)-1))]-'A'))%26)+'A';
         else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'+(key[i%((sizeof(key)-1))]-'A'))%26)+'a';
     }
@@ -111,8 +112,9 @@ void decodeVig(char *s) {
     char key[] = "SISOP";
     for (int i = 0; s[i]; i++) {
     	//cout <<"DEBUG "<< (key[i%((sizeof(key)-3))]) << endl;
-        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-(key[i%((sizeof(key)-1))]-'A'))%26)+'A';
-        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-(key[i%((sizeof(key)-1))]-'A'))%26)+'a';
+        //printf("DEBUG %d\n", (key[i%((sizeof(key)-1))]-'A'));
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'a';
     }
 }
 
