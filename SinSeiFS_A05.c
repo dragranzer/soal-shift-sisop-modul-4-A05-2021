@@ -675,6 +675,7 @@ static int xmp_rename(const char *from, const char *to, unsigned int flags) {
             #if defined DEBUG_MODE
             printf("[QAQ] Decoding %s.\n", fpath);
             #endif
+            logEncode(fpath, tpath);
             int count = decodeFolderRecursively(fpath);
             #if defined DEBUG_MODE
             printf("[QAQ] Total decoded file : %d\n", count);
