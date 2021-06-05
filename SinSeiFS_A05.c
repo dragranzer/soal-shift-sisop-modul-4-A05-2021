@@ -51,6 +51,29 @@ bool isRX(const char *path) {
     return false;
 }
 
+bool isAisA(const char *path) {
+    bool startScan = false;
+    for (int i = strlen(path) - 1; i >= 7; i--) {
+        if (path[i] == '/') {
+            // Hanya mengecek 1 parent directory saja.
+            if (startScan == true) break;
+            startScan = true;
+        }
+        else {
+            if (path[i-7] == 'A' && 
+                path[i-6] == '_' && 
+                path[i-5] == 'i' &&
+                path[i-4] == 's' &&
+                path[i-3] == '_' &&
+                path[i-2] == 'a' && 
+                path[i-1] == '_') {
+                    return true;
+                }
+        }
+    }
+    return false;
+}
+
 /*
     Procedure to encode string using Atbash Cipher.
  */
