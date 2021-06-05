@@ -540,7 +540,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
     return res;
 }
 
-static int xmp_rename(const char *from, const char *to, unsigned int flags) {
+tatic int xmp_rename(const char *from, const char *to, unsigned int flags) {
     int res;
     if (flags) return -EINVAL;
     char fpath[1000], tpath[1000];
