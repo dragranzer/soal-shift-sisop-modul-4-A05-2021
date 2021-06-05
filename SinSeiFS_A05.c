@@ -17,8 +17,8 @@
 
 #define DEBUG_MODE
 
-static const char *dirpath = "/home/{user}/Sisop_Modul4";
-static const char *logpath = "/home/{user}/SinSeiFS.log";
+static const char *dirpath = "/home/ivan/Sisop_Modul4";
+static const char *logpath = "/home/ivan/SinSeiFS.log";
 
 // const for INFO log level
 static const char info[] = "INFO";
@@ -232,6 +232,19 @@ int encodeFolderNameRXmk(const char *basePath, const char* folderName) {
     return 0;
 }
 
+int encodeFolderNameRXrn(const char *basePath, const char* folderName) {
+    char encryptedName[512];
+    strcpy(encryptedName, folderName);
+    encodeAtbash(encryptedName);
+    encodeVig(encryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, encryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
 /*
     Function to decode folder name.
     Return 0 : successful
@@ -252,6 +265,19 @@ int decodeFolderNameRXmk(const char *basePath, const char* folderName) {
     char decryptedName[512];
     strcpy(decryptedName, folderName);
     decodeROT13(decryptedName);
+    decodeAtbash(decryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, decryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int decodeFolderNameRXrn(const char *basePath, const char* folderName) {
+    char decryptedName[512];
+    strcpy(decryptedName, folderName);
+    decodeVig(decryptedName);
     decodeAtbash(decryptedName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, folderName);
@@ -289,6 +315,19 @@ int encodeFileRXmk(char *basePath, char *name) {
     if (res == -1) return -errno;
     return 0;
 }
+
+int encodeFileRXrn(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    encodeAtbash(fileName);
+    encodeVig(fileName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
 /*
     Function to decode file.
     Return 0 : succesful
@@ -309,6 +348,19 @@ int decodeFileRXmk(char *basePath, char *name) {
     char fileName[1024], ext[64];
     getFileDetail(name, fileName, ext);
     decodeROT13(fileName);
+    decodeAtbash(fileName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int decodeFileRXrn(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    decodeVig(fileName);
     decodeAtbash(fileName);
     char f_path[1024], t_path[1024];
     sprintf(f_path, "%s/%s", basePath, name);
@@ -378,6 +430,34 @@ int encodeFolderRecursivelyRXmk(char *basePath) {
     return count;
 }
 
+int encodeFolderRecursivelyRXrn(char *basePath) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            count += encodeFolderRecursivelyRXrn(path);
+            encodeFolderNameRXrn(basePath, dp->d_name);
+        }
+        else {
+            // File
+            if (encodeFileRXrn(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+
 /*
     Function to decode folder.
     Return number of decoded file.
@@ -432,6 +512,34 @@ int decodeFolderRecursivelyRXmk(char *basePath) {
         else {
             // File
             if (decodeFileRXmk(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+
+int decodeFolderRecursivelyRXrn(char *basePath) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            count += decodeFolderRecursivelyRXrn(path);
+            decodeFolderNameRXrn(basePath, dp->d_name);
+        }
+        else {
+            // File
+            if (decodeFileRXrn(basePath, dp->d_name) == 0) count++;
         }
     }
     closedir(dir);
@@ -540,7 +648,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
     return res;
 }
 
-tatic int xmp_rename(const char *from, const char *to, unsigned int flags) {
+static int xmp_rename(const char *from, const char *to, unsigned int flags) {
     int res;
     if (flags) return -EINVAL;
     char fpath[1000], tpath[1000];
@@ -633,8 +741,11 @@ static int xmp_mkdir(const char *path, mode_t mode) {
     res = mkdir(fpath, mode);
     if (res == -1) return -errno;
 
-    if (isAtoZ(fpath))
+    if (isAtoZ(fpath)){
+        int count = encodeFolderRecursively(fpath);
         logEncode("", fpath);
+    }
+
     else if(isRX(fpath)){
         //Tulis log pembuatan RX disini
         makeHiddenRX(1, fpath);
