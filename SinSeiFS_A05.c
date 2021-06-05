@@ -579,6 +579,10 @@ static int xmp_rename(const char *from, const char *to, unsigned int flags) {
             #if defined DEBUG_MODE
             printf("[QAQ] Total encoded file : %d\n", count);
             #endif
+        }else if(!isRX(fpath) && isRX(tpath)){
+            int count = encodeFolderRecursivelyRXrn(fpath);
+        }else if(isRX(fpath) && !isRX(tpath)){
+            int count = decodeFolderRecursivelyRXrn(fpath);
         }
     }
 
