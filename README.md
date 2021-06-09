@@ -97,6 +97,18 @@ Untuk melakukan encode pada suatu direktori secara rekursif hingga folder terdal
 
 Di dalam fungsi `encodeFolderRecursively` dan `decodeFolderRecursively`, proses scan file dan folder di dalamnya dilakukan. Jika sebuah folder ditemukan, maka proses decode/encode dilanjutkan pada folder tersebut.
 
+### Screenshot
+
+Proses compile dan run program fuse.
+
+![image](https://user-images.githubusercontent.com/8071604/121290374-b2b81400-c910-11eb-8904-9868a7cf450e.png)
+
+![image](https://user-images.githubusercontent.com/8071604/121290429-cbc0c500-c910-11eb-87c3-67407fe07175.png)
+
+Proses encode dan decode sebuah folder.
+
+![image](https://user-images.githubusercontent.com/8071604/121290552-07f42580-c911-11eb-8cf4-e5bd5aef4a63.png)
+
 ## Soal 2
 
 ...
@@ -213,6 +225,20 @@ Contohnya jika pada direktori asli nama filenya adalah “FiLe_CoNtoH.txt” mak
 Strategi Penyelesaian:
 
 Untuk poin 3, kami belum mengimplementasikannya. Kami belum menemukan cara memanipulasi nama-nama file yang ditampilkan ketika command `ls` pada terminal dijalankan. Hal ini seharusnya bisa diimplementasikan dengan metode rename, yaitu melakukan rename pada file setiap file baru dibuat atau dipindahkan ke dalam direktori spesial. 
+
+### Screenshot
+
+Proses rename sebuah folder AtoZ_ menjadi folder spesial.
+
+![image](https://user-images.githubusercontent.com/8071604/121290740-5275a200-c911-11eb-842d-1e7519db53d1.png)
+
+Folder di dalam folder sisop tetap terencode sedangkan file README.md telah terdecode.
+
+Proses rename sebuah folder RX_ menjadi folder spesial.
+
+![image](https://user-images.githubusercontent.com/8071604/121290928-a3859600-c911-11eb-8915-e23029d5619e.png)
+
+
 ## Soal 4
 
 ...
