@@ -242,24 +242,78 @@ Proses rename sebuah folder RX_ menjadi folder spesial.
 ## Soal 4
 
 * ### a - file log
-  * ##Problem##
+  * **Problem**
     Terdapat file `SinSeiFS.log` yang disimpan di `/home/[user]/SinSeiFS.log`. File ini digunakan untuk menyimpan log setiap `system call` dijalankan
-  * ##Solusi##
+  * **Solusi**
     * Membuat const file path agar mudah diakses
       ```c
       static const char *logpath = "/home/{user}/SinSeiFS.log";
       ```
     * Buat fungsi yang dapat dipanggil untuk logging
+      ```c
+      void logEncode(char *dir1, char *dir2) {
+        char buff[1024], cmd[32];
+        if (dir1[0] != '\0') {
+          strcpy(cmd, "RENAME");
+          sprintf(buff, "%s::%s", dir1, dir2);
+          logInfo(cmd, buff);
+        }
+        else {
+          strcpy(cmd, "CREATE");
+          sprintf(buff, "%s", dir2);
+          logWarn(cmd, buff);
+        }
+      }
+      ```
     * Manfaatkan `fopen`
       ```c
       FILE *out = fopen(logpath, "a");
       ```
      
 * ### b - level di log
-  * ##Problem##
+  * **Problem**
     Terdapat 2 level log, `WARNING` dan `INFO`
-  * ##Solusi##
+  * **Solusi**
     Dijelaskan lebih detail di subbagian selanjutnya
 * ### c - level `WARNING`
+  * **Problem**
+    Level `WARNING` digunakan untuk logging `syscall`: `rmdir` dan `unlink`
+  * **Solusi**
+    * Siapkan const jenis level
+      ```c
+      // const for WARNING log level
+      static const char warn[] = "WARNING";
+      ```
+    * Buatlah fungsi yang dapat dipanggil oleh fungsi `logEncode` untuk logging level `WARNING`
+      ```c
+      /*
+      function: logWarn
+      add a WARNING level log
+      @param command: type of called system call
+      @param desc: additional information and parameters
+      @return null
+      */
+      void logWarn(char *command, char *desc);
+      ```
 * ### d - level `INFO`
+  * **Problem**
+    Level `INFO` digunakan untuk logging `syscall` selain dari level `WARNING`
+  * **Solusi**
+    * Siapkan const jenis level
+      ```c
+      // const for INFO log level
+      static const char info[] = "INFO";
+      ```
+    * Buatlah fungsi yang dapat dipanggil oleh fungsi `logEncode` untuk logging level `INFO`
+      ```c
+      /*
+      function: logWarn
+      add a WARNING level log
+      @param command: type of called system call
+      @param desc: additional information and parameters
+      @return null
+      */
+      void logWarn(char *command, char *desc);
+      ```
 * ### e - format log
+
