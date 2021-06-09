@@ -242,7 +242,24 @@ Proses rename sebuah folder RX_ menjadi folder spesial.
 ## Soal 4
 
 * ### a - file log
+  * ##Problem##
+    Terdapat file `SinSeiFS.log` yang disimpan di `/home/[user]/SinSeiFS.log`. File ini digunakan untuk menyimpan log setiap `system call` dijalankan
+  * ##Solusi##
+    * Membuat const file path agar mudah diakses
+      ```c
+      static const char *logpath = "/home/{user}/SinSeiFS.log";
+      ```
+    * Buat fungsi yang dapat dipanggil untuk logging
+    * Manfaatkan `fopen`
+      ```c
+      FILE *out = fopen(logpath, "a");
+      ```
+     
 * ### b - level di log
+  * ##Problem##
+    Terdapat 2 level log, `WARNING` dan `INFO`
+  * ##Solusi##
+    Dijelaskan lebih detail di subbagian selanjutnya
 * ### c - level `WARNING`
 * ### d - level `INFO`
 * ### e - format log
