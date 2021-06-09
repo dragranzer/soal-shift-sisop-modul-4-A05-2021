@@ -212,8 +212,7 @@ Contohnya jika pada direktori asli nama filenya adalah “FiLe_CoNtoH.txt” mak
 
 Strategi Penyelesaian:
 
-Untuk poin 3, kami belum mengimplementasikannya. Kami belum menemukan cara memanipulasi nama-nama file yang ditampilkan ketika command `ls` pada terminal dijalankan. Hal ini bisa diimplementasikan dengan metode rename, yaitu melakukan rename pada file setiap file baru dibuat atau dipindahkan ke dalam direktori spesial.
-
+Untuk poin 3, kami belum mengimplementasikannya. Kami belum menemukan cara memanipulasi nama-nama file yang ditampilkan ketika command `ls` pada terminal dijalankan. Hal ini seharusnya bisa diimplementasikan dengan metode rename, yaitu melakukan rename pada file setiap file baru dibuat atau dipindahkan ke dalam direktori spesial. 
 ## Soal 4
 
 ...
