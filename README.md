@@ -97,4 +97,123 @@ Untuk melakukan encode pada suatu direktori secara rekursif hingga folder terdal
 
 Di dalam fungsi `encodeFolderRecursively` dan `decodeFolderRecursively`, proses scan file dan folder di dalamnya dilakukan. Jika sebuah folder ditemukan, maka proses decode/encode dilanjutkan pada folder tersebut.
 
+## Soal 2
 
+...
+
+## Soal 3
+
+Karena Sin masih super duper gabut akhirnya dia menambahkan sebuah fitur lagi pada filesystem mereka. 
+
+### Poin a
+
+Jika sebuah direktori dibuat dengan awalan “A_is_a_”, maka direktori tersebut akan menjadi sebuah direktori spesial.
+
+Strategi Penyelesaian:
+
+Untuk mengecek apakah direktori merupakan direktori spesial atau tidak, fungsi `isAisA` digunakan. Fungsi ini menerima parameter sebuah string yaitu direktori yang akan di cek. Fungsi ini mengembalikan nilai TRUE jika direktori mempunyai substring "A_is_a_" dan mengembalikan nilai FALSE jika direktori tidak mempunyai substring "A_is_a_".
+
+Misalnya, 
+
+```c
+dir1 = "/home/ryan/Downloads/A_is_a_Photo/1.jpg"
+dir2 = "/home/ryan/Downloads/Photo/2.jpg"
+dir3 = "/home/ryan/Downloads/A_is_a_Photo/2019/1.jpg"
+
+printf("%d %d %d", isAisA(dir1), isAisA(dir2), isAisA(dir3))
+
+// Output: 1 0 1
+```
+
+Selain fungsi `isAisA`, ada fungsi `isAisA_Content(path)`. `path` merupakan string yang merujuk pada lokasi sebuah file sehingga fungsi ini bertujuan untuk mengecek apakah suatu file berada di dalam direktori spesial atau tidak. Fungsi ini mengembalikan nilai TRUE jika parent direktori pada `path` mempunyai substring "A_is_a_". Parent direktori saja yang di cek karena pada soal 3 poin d dijelaskan bahwa direktori spesial hanya berdampak pada file-file yang berada di dalamnya. Dalam kata lain, sifat direktori spesial tidak diturunkan kepada folder yang ada di dalamnya secara rekursif.
+
+Misalnya,
+
+```c
+isAisA_Content("/home/ryan/Downloads/A_is_a_Photo/1.jpg") = True
+isAisA_Content("/home/ryan/Downloads/A_is_a_Photo/2019/1.jpg") = False // Artinya, file ini bukan merupakan file yang berada di dalam direktori spesial
+isAisA_Content("/home/ryan/Downloads/A_is_a_Photo") = False // A_is_a_Photo diasumsikan merupakan sebuah file tanpa ektensi yang berada di dalam folder Downloads sehingga file ini bukan merupakan file yang berada di dalam direktori spesial
+isAisA_Content("/home/ryan/Downloads/A_is_a_Photo/A_is_a_Good/2.jpg") = True
+isAisA_Content("/home/ryan/Downloads/A_is_a_Photo/Good/A_is_a_Best/t.jpg") = True
+```
+
+Direktori yang baru saja dibuat adalah direktori kosong sehingga tidak perlu dilakukan proses encode / decode.
+
+### Poin b
+
+Jika sebuah direktori di-rename dengan memberi awalan “A_is_a_”, maka direktori tersebut akan menjadi sebuah direktori spesial.
+
+Strategi Penyelesaian:
+
+Fungsi fuse `xmp_rename` akan terpanggil ketika sebuah direktori di-rename atau sebuah file di-rename. Dengan memanfaatkan fungsi `isAisA` yang telah dibuat pada poin a, kita dapat mengetahui apakah sebuah direktori di-rename dari direktori spesial menjadi direktori tidak spesial atau direktori tidak spesial menjadi direktori spesial dengan membandingan `isAisA(fpath)` dan `isAisA(tpath)`.
+
+Misalnya,
+```c
+A = isAisA(fpath)
+B = isAisA(tpath)
+
+if A and !B
+  // Substring A_is_a_ dihapus
+else if !A and B
+  // Substring A_is_a_ ditambahkan
+```
+
+### Poin c
+
+Apabila direktori yang terenkripsi di-rename dengan menghapus “A_is_a_” pada bagian awal nama folder maka direktori tersebut menjadi direktori normal.
+
+Penjelasan terkait poin c telah diberikan pada strategi penyelesaian poin b.
+
+### Poin d
+
+Direktori spesial adalah direktori yang mengembalikan enkripsi/encoding pada direktori “AtoZ_” maupun “RX_” namun masing-masing aturan mereka tetap berjalan pada direktori di dalamnya (sifat recursive  “AtoZ_” dan “RX_” tetap berjalan pada subdirektori).
+
+Strategi Penyelesaian:
+
+Jika sebuah direktori X yang mempunyai awalan AtoZ_ atau RX_ di-rename menjadi direktori spesial (direktori dengan awalan A_is_a_), maka file-file yang berada di dalam direktori X tersebut akan di-decode. Akan tetapi, file-file yang berada di dalam folder yang berada di dalam direktori X tidak di-decode.
+
+Untuk menyelesaikan persoalan ini, fungsi `xmp_rename` digunakan. Dengan memanfaatkan fungsi `isRX` dan `isAtoZ` yang telah dibuat, kita dapat mendeteksi kapan sebuah direktori RX_ di-rename menjadi direktori spesial atau kapan sebuah direktori AtoZ_ di-rename menjadi direktori spesial. Berikut ini contohnya
+
+```c
+// fpath adalah path old
+// tpath adalah path new
+Z1 = isAtoZ(fpath)
+Z2 = isAtoZ(tpath)
+R1 = isRX(fpath)
+R2 = isRX(tpath)
+S1 = isAisA(fpath)
+S2 = isAisA(tpath)
+
+if Z1 and S2
+  // Ketika folder AtoZ_ di-rename menjadi folder spesial
+else if R1 and S2
+  // Ketika folder RX_ di-rename menjadi folder spesial
+else if S1 and Z2
+  // Ketika folder spesial di-rename menjadi folder AtoZ_
+else if S1 and R2
+  // Ketika folder spesial di-rename menjadi folder RX_
+```
+
+Ketika folder AtoZ_ di-rename menjadi folder spesial, maka panggil fungsi `decodeFolderRecursively(path, depth)` dengan depth = 0 agar proses decode hanya berlaku pada file yang berada di dalamnya. Dalam kata lain, tidak perlu melakukan decode terhadap file yang berada di dalam folder yang berada di dalam folder spesial.
+
+Hal ini juga berlaku untuk folder RX_.
+
+Ketika folder spesial di-rename menjadi folder AtoZ_, maka panggil fungsi `encodeFolderRecursively(path, depth)` dengan depth = 0 agar proses encode hanya berlaku pada file yang berada di dalamnya.
+
+Hal ini juga berlaku untuk folder RX_.
+
+### Poin e
+
+Pada direktori spesial semua nama file (tidak termasuk ekstensi) pada fuse akan berubah menjadi lowercase insensitive dan diberi ekstensi baru berupa nilai desimal dari binner perbedaan namanya.
+
+
+Contohnya jika pada direktori asli nama filenya adalah “FiLe_CoNtoH.txt” maka pada fuse akan menjadi “file_contoh.txt.1321”. 1321 berasal dari biner 10100101001.
+
+
+Strategi Penyelesaian:
+
+Untuk poin 3, kami belum mengimplementasikannya. Kami belum menemukan cara memanipulasi nama-nama file yang ditampilkan ketika command `ls` pada terminal dijalankan. Hal ini bisa diimplementasikan dengan metode rename, yaitu melakukan rename pada file setiap file baru dibuat atau dipindahkan ke dalam direktori spesial.
+
+## Soal 4
+
+...
