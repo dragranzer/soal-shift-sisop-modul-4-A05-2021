@@ -178,16 +178,13 @@ Tetap menggunakan fungsi `isRX` untuk mengidentifikasi apakah directory di-renam
 if(!isRX(fpath) && isRX(tpath)){
     encodeFolderRecursivelyRXrn(fpath, INF);
     logEncode(fpath, tpath);
-}else if(isRX(fpath) && !isRX(tpath)){
-    decodeFolderRecursivelyRXrn(fpath, INF);
-    logEncode(fpath, tpath);
 }
 ```
 dimana `fpath` adalah nama sebelum di rename dan `tpath` adalah nama setelah di rename.
 
 Pada poin b juga ditambah fungsi enkripsi `Viginere` dengan key "SISOP" untuk melakukan encode menggunakan Atbash + Viginere.
 ```c
-oid encodeVig(char *s) {
+void encodeVig(char *s) {
     // Encode Viginere Cipher string
     char key[] = "SISOP";
     for (int i = 0; s[i]; i++) {
@@ -196,14 +193,6 @@ oid encodeVig(char *s) {
     }
 }
 
-void decodeVig(char *s) {
-    // Decode Viginere Cipher string
-    char key[] = "SISOP";
-    for (int i = 0; s[i]; i++) {
-        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'A';
-        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'a';
-    }
-}
 ```
 
 Untuk fungsi `encodeFolderRecursivelyRXrn()` adalah fungsi yang digunakan untuk melakukan encode pada seluruh isi dari directory yang di-rename dengan awalan “RX_[Nama]”
@@ -239,6 +228,120 @@ int encodeFolderRecursivelyRXrn(char *basePath, int depth) {
     return count;
 }
 ```
+terdapat fungsi `encodeFolderNameRXrn()` dan `encodeFileRXrn()` untuk melakukan encoding pada file dan folder dalam directory
+```c
+int encodeFileRXrn(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    encodeAtbash(fileName);
+    encodeVig(fileName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int encodeFolderNameRXrn(const char *basePath, const char* folderName) {
+    char encryptedName[512];
+    strcpy(encryptedName, folderName);
+    encodeAtbash(encryptedName);
+    encodeVig(encryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, encryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+```
+### Poin c
+
+Apabila direktori yang terencode di-rename (Dihilangkan “RX_” nya), maka folder menjadi tidak terencode dan isi direktori tersebut akan terdecode berdasar nama aslinya.
+
+Strategi Penyelesaian:
+
+Dibutuhkan tambahan fungsi decode dari `Viginere`
+
+```c
+void decodeVig(char *s) {
+    // Decode Viginere Cipher string
+    char key[] = "SISOP";
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'a';
+    }
+}
+```
+Kemudian pada `xmp_rename` ditambahkan
+```c
+if(isRX(fpath) && !isRX(tpath)){
+    decodeFolderRecursivelyRXrn(fpath, INF);
+    logEncode(fpath, tpath);
+}
+```
+untuk melakukan decode apabila nama awalnya memiliki awalan "RX_" dan nama akhirnya tidak, lalu terdapat fungsi `decodeFolderRecursivelyRXrn()` untuk melakukan decode secara rekursif
+```c
+int decodeFolderRecursivelyRXrn(char *basePath, int depth) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            if (depth > 0) {
+                count += decodeFolderRecursivelyRXrn(path, INF);
+                decodeFolderNameRXrn(basePath, dp->d_name);
+            }
+        }
+        else {
+            // File
+            if (decodeFileRXrn(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+```
+didalam fungsi `decodeFolderRecursivelyRXrn()` terdapat `decodeFolderNameRXrn()` dan `decodeFileRXrn()` untuk melakukan decode file dan folder
+```c
+int decodeFileRXrn(char *basePath, char *name) {
+    char fileName[1024], ext[64];
+    getFileDetail(name, fileName, ext);
+    decodeVig(fileName);
+    decodeAtbash(fileName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, name);
+    sprintf(t_path, "%s/%s%s", basePath, fileName, ext);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+
+int decodeFolderNameRXrn(const char *basePath, const char* folderName) {
+    char decryptedName[512];
+    strcpy(decryptedName, folderName);
+    decodeVig(decryptedName);
+    decodeAtbash(decryptedName);
+    char f_path[1024], t_path[1024];
+    sprintf(f_path, "%s/%s", basePath, folderName);
+    sprintf(t_path, "%s/%s", basePath, decryptedName);
+    int res = rename(f_path, t_path);
+    if (res == -1) return -errno;
+    return 0;
+}
+```
+
 
 ## Soal 3
 
