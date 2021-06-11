@@ -185,7 +185,60 @@ if(!isRX(fpath) && isRX(tpath)){
 ```
 dimana `fpath` adalah nama sebelum di rename dan `tpath` adalah nama setelah di rename.
 
-Untuk fungsi `encodeFolderRecursivelyRXrn()` dan `decodeFolderRecursivelyRXrn()` 
+Pada poin b juga ditambah fungsi enkripsi `Viginere` dengan key "SISOP" untuk melakukan encode menggunakan Atbash + Viginere.
+```c
+oid encodeVig(char *s) {
+    // Encode Viginere Cipher string
+    char key[] = "SISOP";
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'+(key[i%((sizeof(key)-1))]-'A'))%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'+(key[i%((sizeof(key)-1))]-'A'))%26)+'a';
+    }
+}
+
+void decodeVig(char *s) {
+    // Decode Viginere Cipher string
+    char key[] = "SISOP";
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-(key[i%((sizeof(key)-1))]-'A')+26)%26)+'a';
+    }
+}
+```
+
+Untuk fungsi `encodeFolderRecursivelyRXrn()` adalah fungsi yang digunakan untuk melakukan encode pada seluruh isi dari directory yang di-rename dengan awalan “RX_[Nama]”
+
+```c
+int encodeFolderRecursivelyRXrn(char *basePath, int depth) {
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir) return 0;
+    int count = 0;
+    while ((dp = readdir(dir)) != NULL) {
+        if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) continue;
+        strcpy(path, basePath);
+        strcat(path, "/");
+        strcat(path, dp->d_name);
+
+        struct stat path_stat;
+        stat(path, &path_stat);
+        if (!S_ISREG(path_stat.st_mode)) {
+            // Folder
+            if (depth > 0) {
+                count += encodeFolderRecursivelyRXrn(path, depth - 1);
+                encodeFolderNameRXrn(basePath, dp->d_name);
+            }
+        }
+        else {
+            // File
+            if (encodeFileRXrn(basePath, dp->d_name) == 0) count++;
+        }
+    }
+    closedir(dir);
+    return count;
+}
+```
 
 ## Soal 3
 
