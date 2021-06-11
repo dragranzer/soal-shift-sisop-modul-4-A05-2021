@@ -341,6 +341,28 @@ int decodeFolderNameRXrn(const char *basePath, const char* folderName) {
     return 0;
 }
 ```
+### poin d
+
+Setiap pembuatan direktori terencode (mkdir atau rename) akan tercatat ke sebuah log file beserta methodnya (apakah itu mkdir atau rename).
+
+Strategi penyelesaian:
+
+Untuk melakukan log, prosedur `logEncode` dibuat. Prosedur ini berfungsi untuk mencatat suatu kegiatan ke sebuah log. Prosedur ini terpanggil sebelum proses decode atau encode selesai.
+
+```c
+if(!isRX(fpath) && isRX(tpath)){
+    encodeFolderRecursivelyRXrn(fpath, INF);
+    logEncode(fpath, tpath);
+}else if(isRX(fpath) && !isRX(tpath)){
+    decodeFolderRecursivelyRXrn(fpath, INF);
+    logEncode(fpath, tpath);
+}
+```
+Screenshoot:
+Sebelum di rename:
+![Screenshot from 2021-06-11 22-29-12](https://user-images.githubusercontent.com/71221969/121712034-739ee400-cb05-11eb-943c-5964ea832099.png)
+Setelah di rename:
+![Screenshot from 2021-06-11 22-29-29](https://user-images.githubusercontent.com/71221969/121712059-7b5e8880-cb05-11eb-9f21-b808b66afc97.png)
 
 
 ## Soal 3
