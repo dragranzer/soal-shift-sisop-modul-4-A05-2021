@@ -111,7 +111,81 @@ Proses encode dan decode sebuah folder.
 
 ## Soal 2
 
-...
+Selain itu Sei mengusulkan untuk membuat metode enkripsi tambahan agar data pada komputer mereka semakin aman. Berikut rancangan metode enkripsi tambahan yang dirancang oleh Sei
+
+### Poin a
+
+Jika sebuah direktori dibuat dengan awalan “RX_[Nama]”, maka direktori tersebut akan menjadi direktori terencode beserta isinya dengan perubahan nama isi sesuai kasus nomor 1 dengan algoritma tambahan ROT13 (Atbash + ROT13).
+
+Strategi penyelesaian:
+
+Untuk mengecek apakah nama directory dibuat dengan awalan “RX_[Nama]” atau tidak adalah dengan membuat fungsi `isRX` yang akan me return true jika namanya dibuat dengan awalan “RX_[Nama]” dan false jika tidak
+
+```c
+bool isRX(const char *path) {
+    int len = strlen(path);
+    for (int i = 0; i < len - 3 + 1; i++) {
+        if (path[i] == 'R' && path[i+1] == 'X' && path[i+2] == '_') return true;
+    }
+    return false;
+}
+```
+
+Dibuat juga fungsi enkripsi `Atbash` dan `ROT13` untuk encode dan decode
+```c
+void encodeAtbash(char *s) {
+    // Encode string using Atbash Cipher
+    for (int i = 0; i < strlen(s); i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = 'Z'-s[i]+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = 'z'-s[i]+'a';
+    }
+}
+
+void encodeROT13(char *s) {
+    // Decode Atbash Cipher string
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'+13)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'+13)%26)+'a';
+    }
+}
+
+void decodeAtbash(char *s) {
+    // Decode Atbash Cipher string
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = 'A'-s[i]+'Z';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = 'a'-s[i]+'z';
+    }
+}
+
+void decodeROT13(char *s) {
+    // Decode ROT13 Cipher string
+    for (int i = 0; s[i]; i++) {
+        if ('A' <= s[i] && s[i] <= 'Z') s[i] = ((s[i]-'A'-13)%26)+'A';
+        else if ('a' <= s[i] && s[i] <= 'z') s[i] = ((s[i]-'a'-13)%26)+'a';
+    }
+}
+```
+
+### Poin b
+
+Jika sebuah direktori di-rename dengan awalan “RX_[Nama]”, maka direktori tersebut akan menjadi direktori terencode beserta isinya dengan perubahan nama isi sesuai dengan kasus nomor 1 dengan algoritma tambahan Vigenere Cipher dengan key “SISOP” (Case-sensitive, Atbash + Vigenere).
+
+Strategi Penyelesaian:
+
+Tetap menggunakan fungsi `isRX` untuk mengidentifikasi apakah directory di-rename dengan awalan “RX_[Nama]” atau tidak dengan cara
+
+```c
+if(!isRX(fpath) && isRX(tpath)){
+    encodeFolderRecursivelyRXrn(fpath, INF);
+    logEncode(fpath, tpath);
+}else if(isRX(fpath) && !isRX(tpath)){
+    decodeFolderRecursivelyRXrn(fpath, INF);
+    logEncode(fpath, tpath);
+}
+```
+dimana `fpath` adalah nama sebelum di rename dan `tpath` adalah nama setelah di rename.
+
+Untuk fungsi `encodeFolderRecursivelyRXrn()` dan `decodeFolderRecursivelyRXrn()` 
 
 ## Soal 3
 
